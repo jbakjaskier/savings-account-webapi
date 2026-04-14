@@ -7,6 +7,7 @@ idempotency-key: 123456098765
 
 {
   "accountType": "Savings",
+  "customerNumber": "1643",
   "customerName": {
     "firstName": "Angel",
     "lastName": "Klien"

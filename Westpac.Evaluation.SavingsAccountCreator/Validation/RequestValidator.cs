@@ -74,6 +74,21 @@ public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offe
             );
         }
 
+        if (string.IsNullOrWhiteSpace(request.requestBody.CustomerNumber))
+        {
+            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
+                new ValidationFailure(SavingsAccountRequestFields.CustomerNumber, "The customer number is required")
+            );
+        }
+
+        if (!request.requestBody.CustomerNumber.All(char.IsDigit)|| !long.TryParse(request.requestBody.CustomerNumber, out var customerNumberParsed))
+        {
+            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
+                new ValidationFailure(SavingsAccountRequestFields.CustomerNumber, "The customer number is invalid")
+            );
+            
+        }
+
         if (request.requestBody.CustomerName is null)
         {
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
@@ -107,7 +122,8 @@ public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offe
                     LastName = request.requestBody.CustomerName.LastName!
                 },
                 AccountNickName: null,
-                IdempotencyKey: request.idempotencyKeyFromHeader!
+                IdempotencyKey: request.idempotencyKeyFromHeader!,
+                CustomerNumber: customerNumberParsed
                 ));
 
         }
@@ -143,7 +159,8 @@ public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offe
                 LastName = request.requestBody.CustomerName.LastName!
             },
             AccountNickName: request.requestBody.AccountNickName!,
-            IdempotencyKey: request.idempotencyKeyFromHeader!
+            IdempotencyKey: request.idempotencyKeyFromHeader!,
+            CustomerNumber: customerNumberParsed
         ));
         
     }

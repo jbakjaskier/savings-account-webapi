@@ -101,7 +101,6 @@ var apiGroup = app.MapGroup("api/v1");
 apiGroup.MapPost("/account", ([FromHeader(Name = "idempotency-key")] string? idempotencyKey, [FromBody] CreateAccountRequest createAccountRequest, IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader), ValidatedSavingsAccountRequest> savingsAccountValidator) =>
     {
         var validationResult = savingsAccountValidator.Validate((createAccountRequest, idempotencyKey));
-
         if (validationResult is OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation
             failedOperation)
         {

@@ -15,7 +15,8 @@ public enum SavingsAccountRequestFields
     FirstName,
     LastName,
     AccountNickName,
-    IdempotencyKey
+    IdempotencyKey,
+    CustomerNumber
 }
 
 
@@ -30,6 +31,8 @@ public enum AccountType
 public record CreateAccountRequest
 {
     public string? AccountType { get; init; }
+    
+    public string? CustomerNumber { get; init; }
     
     public CustomerName? CustomerName { get; init; }
     
