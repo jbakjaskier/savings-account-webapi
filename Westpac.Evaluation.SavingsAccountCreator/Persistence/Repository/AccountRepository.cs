@@ -72,12 +72,13 @@ public class AccountRepository(
                 Customer = customerInDb,
                 BankCode = "03",
                 BranchCode = account.BranchCode,
-                AccountNumber = "0000000",
                 AccountSuffix = ((existingAccountCount ?? 0) + 1).ToString("D3"), // Generates 001, 002, etc.
                 AccountNickName = account.AccountNickName
             };
 
             await context.Accounts.AddAsync(newAccount, cancellationToken);
+            
+            await context.SaveChangesAsync(cancellationToken); 
 
             await transaction.CommitAsync(cancellationToken);
 

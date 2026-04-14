@@ -28,7 +28,7 @@ public class Account
     ///     This is the account number for the account.
     ///     This is a seven digit value
     /// </summary>
-    public required string AccountNumber { get; init; }
+    public string AccountNumber { get; init; }
 
 
     /// <summary>
@@ -79,11 +79,6 @@ public class AccountEntityTypeConfiguration : IEntityTypeConfiguration<Account>
             .IsRequired()
             .HasMaxLength(4);
 
-        builder.Property(x => x.AccountNumber)
-            .IsRequired()
-            .IsFixedLength()
-            .HasMaxLength(7);
-
         builder.Property(x => x.AccountSuffix)
             .IsRequired()
             .IsFixedLength()
@@ -94,5 +89,15 @@ public class AccountEntityTypeConfiguration : IEntityTypeConfiguration<Account>
             .IsRequired(false)
             .IsFixedLength(false)
             .HasMaxLength(30);
+        
+        // 2. Configure the AccountNumber string property
+        builder
+            .Property(a => a.AccountNumber)
+            .IsRequired()
+            .IsFixedLength()
+            .HasMaxLength(7)
+            // Using Postgres to ensure 7 digits (e.g., "0000001")
+            .HasDefaultValueSql($"to_char(nextval('\"{AccountDbContextConstants.SchemaName}\".\"{AccountDbContextConstants.AccountNumberSequenceName}\"'), 'fm0000000')")
+            .ValueGeneratedOnAdd(); // Tells EF Core the DB will generate this on insert
     }
 }
