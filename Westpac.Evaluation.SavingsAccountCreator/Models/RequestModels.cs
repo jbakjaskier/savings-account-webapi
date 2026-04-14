@@ -14,7 +14,8 @@ public enum SavingsAccountRequestFields
     CustomerName,
     FirstName,
     LastName,
-    AccountNickName
+    AccountNickName,
+    IdempotencyKey
 }
 
 

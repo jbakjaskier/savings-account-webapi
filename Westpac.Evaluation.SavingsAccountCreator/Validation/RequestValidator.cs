@@ -32,17 +32,34 @@ public interface IRequestValidator<in TUnValidatedRequest, TValidatedRequest>
 
 
 
-public class SavingsRequestValidator (IOptions<OffensiveWords> offensiveWordsOptions, ILogger<SavingsRequestValidator> logger, 
+public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offensiveWordsOptions, ILogger<SavingsRequestValidator> logger, 
     [FromKeyedServices("first-name-validator")] IRequestValidator<string?, string> firstNameLengthValidator, 
     [FromKeyedServices("last-name-validator")] IRequestValidator<string?, string> lastNameLengthValidator, 
-    [FromKeyedServices("account-nickname-length-validator")] IRequestValidator<string?, string> accountNickNameLengthValidator) : IRequestValidator<CreateAccountRequest, ValidatedSavingsAccountRequest>
+    [FromKeyedServices("idempotency-key-validator")] IRequestValidator<string?, string> idempotencyKeyValidator,
+    [FromKeyedServices("account-nickname-length-validator")] IRequestValidator<string?, string> accountNickNameLengthValidator) : IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader), ValidatedSavingsAccountRequest>
 {
-    public OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure> Validate(CreateAccountRequest request)
+    public OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure> Validate((CreateAccountRequest requestBody, string? idempotencyKeyFromHeader) request)
     {
-        logger.LogInformation("Validating savings account request with {accountType}, {firstName}, {lastName} and {accountNickName}", request.AccountType, request.CustomerName?.FirstName,request.CustomerName?.LastName ,request.AccountNickName);
+
+        if (string.IsNullOrWhiteSpace(request.idempotencyKeyFromHeader))
+        {
+            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
+                new ValidationFailure(SavingsAccountRequestFields.IdempotencyKey, "The idempotency key is required in the header")
+            );
+        }
+
+        if (idempotencyKeyValidator.Validate(request.idempotencyKeyFromHeader) is
+            OperationResponse<string, ValidationFailure>.FailedOperation idempotencyKeyFailureValidationResult)
+        {
+            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
+                idempotencyKeyFailureValidationResult.Data
+            );
+        }
         
-        if (string.IsNullOrWhiteSpace(request.AccountType) ||
-            !Enum.TryParse <AccountType>(request.AccountType, ignoreCase: false,out var parsedAccountType))
+        logger.LogInformation("Validating savings account request with {accountType}, {firstName}, {lastName} and {accountNickName}", request.requestBody.AccountType, request.requestBody.CustomerName?.FirstName,request.requestBody.CustomerName?.LastName ,request.requestBody.AccountNickName);
+        
+        if (string.IsNullOrWhiteSpace(request.requestBody.AccountType) ||
+            !Enum.TryParse <AccountType>(request.requestBody.AccountType, ignoreCase: false,out var parsedAccountType))
         {
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
                 new ValidationFailure(SavingsAccountRequestFields.AccountType, "The account type is invalid") //Intentionally opaque errors - as we don't want to leak any information about the business logic - however the contract at `openapi.json/yaml` contains the contract in great detail
@@ -57,14 +74,14 @@ public class SavingsRequestValidator (IOptions<OffensiveWords> offensiveWordsOpt
             );
         }
 
-        if (request.CustomerName is null)
+        if (request.requestBody.CustomerName is null)
         {
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
                 new ValidationFailure(SavingsAccountRequestFields.CustomerName, "The customer name is required")
             );
         }
 
-        if (firstNameLengthValidator.Validate(request.CustomerName.FirstName) is OperationResponse<string, ValidationFailure>.FailedOperation
+        if (firstNameLengthValidator.Validate(request.requestBody.CustomerName.FirstName) is OperationResponse<string, ValidationFailure>.FailedOperation
             failedFirstNameValidationResult)
         {
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
@@ -72,45 +89,61 @@ public class SavingsRequestValidator (IOptions<OffensiveWords> offensiveWordsOpt
             );
         }
         
-        if (lastNameLengthValidator.Validate(request.CustomerName.LastName) is OperationResponse<string, ValidationFailure>.FailedOperation lastNameFailureValidationResult)
+        if (lastNameLengthValidator.Validate(request.requestBody.CustomerName.LastName) is OperationResponse<string, ValidationFailure>.FailedOperation lastNameFailureValidationResult)
         {
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
                 lastNameFailureValidationResult.Data
             );
         }
         
-        if (string.IsNullOrWhiteSpace(request.AccountNickName))
+        if (string.IsNullOrWhiteSpace(request.requestBody.AccountNickName))
         {
-            logger.LogInformation("The savings account request has been successfully validated with {firstName} and {lastName} and {accountNickName}", request.CustomerName.FirstName, request.CustomerName.LastName, null);
+            logger.LogInformation("The savings account request has been successfully validated with {firstName} and {lastName} and {accountNickName}", request.requestBody.CustomerName.FirstName, request.requestBody.CustomerName.LastName, null);
 
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.SuccessfulOperation(new ValidatedSavingsAccountRequest(
                 new ValidatedCustomerName()
                 {
-                    FirstName = request.CustomerName.FirstName!,
-                    LastName = request.CustomerName.LastName!
+                    FirstName = request.requestBody.CustomerName.FirstName!,
+                    LastName = request.requestBody.CustomerName.LastName!
                 },
-                AccountNickName: null
+                AccountNickName: null,
+                IdempotencyKey: request.idempotencyKeyFromHeader!
                 ));
 
         }
         
-        if (accountNickNameLengthValidator.Validate(request.AccountNickName) is OperationResponse<string, ValidationFailure>.FailedOperation accountNickNameFailureValidationResult)
+        if (accountNickNameLengthValidator.Validate(request.requestBody.AccountNickName) is OperationResponse<string, ValidationFailure>.FailedOperation accountNickNameFailureValidationResult)
         {
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
                 accountNickNameFailureValidationResult.Data
             );
         }
         
+        //Look into offensive words provided by the config
+        //TODO: We should also in the future look at combination of WORDS, SYMBOLS, SPECIAL CHARACTERs and NUMBERs for offensive inputs - For example - B@D
+        //TODO: If this is a public facing API would recommend a sentiment analysis integration - however, we're now adding another integration around the same 
+        // The current "contains" logic is iffy at best - would be great to have better business requirements around the same. 
+        if (offensiveWordsOptions.Value.OffensiveWordsToBeFiltered.Any(offensiveWord =>
+                request.requestBody.AccountNickName.Contains(offensiveWord, StringComparison.OrdinalIgnoreCase)))
+        {
+            logger.LogWarning("The {AccountNickname} was recognised as containing offensive words", request.requestBody.AccountNickName);
+            
+            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
+                new ValidationFailure(SavingsAccountRequestFields.AccountNickName, "The account nickname cannot contain offensive words")
+            );
+        }
         
-        logger.LogInformation("The savings account request has been successfully validated with {firstName} and {lastName} and {accountNickName}", request.CustomerName.FirstName, request.CustomerName.LastName, request.AccountNickName);
+        
+        logger.LogInformation("The savings account request has been successfully validated with {firstName} and {lastName} and {accountNickName}", request.requestBody.CustomerName.FirstName, request.requestBody.CustomerName.LastName, request.requestBody.AccountNickName);
 
         return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.SuccessfulOperation(new ValidatedSavingsAccountRequest(
             new ValidatedCustomerName()
             {
-                FirstName = request.CustomerName.FirstName!,
-                LastName = request.CustomerName.LastName!
+                FirstName = request.requestBody.CustomerName.FirstName!,
+                LastName = request.requestBody.CustomerName.LastName!
             },
-            AccountNickName: request.AccountNickName!
+            AccountNickName: request.requestBody.AccountNickName!,
+            IdempotencyKey: request.idempotencyKeyFromHeader!
         ));
         
     }

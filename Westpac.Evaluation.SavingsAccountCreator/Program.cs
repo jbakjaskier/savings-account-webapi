@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Westpac.Evaluation.DomainModels;
+using Westpac.Evaluation.SavingsAccountCreator.Configuration;
 using Westpac.Evaluation.SavingsAccountCreator.Models;
 using Westpac.Evaluation.SavingsAccountCreator.Validation;
 
@@ -15,6 +16,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks()
     .AddCheck("Liveness", () => HealthCheckResult.Healthy())
     .AddCheck("Readiness", () => HealthCheckResult.Healthy());
+
+#region Inject Configuration
+
+builder.Services.Configure<OffensiveWordsConfiguration>(builder.Configuration.GetRequiredSection("OffensiveWords"));
+
+#endregion
 
 #region Inject Services
 
@@ -57,12 +64,22 @@ builder.Services
 builder.Services
     .AddKeyedSingleton<IRequestValidator<string?, string>>("account-nickname-length-validator", (sp, key) =>
     {
+        //TODO: Can account nick name be whitespaced ?? (We know it CAN be null - but whitespaced is different)
         var logger = sp.GetRequiredService<ILogger<InputLengthAndNonEmptyStringValidator>>();
         return new InputLengthAndNonEmptyStringValidator(logger, 5, 30, SavingsAccountRequestFields.AccountNickName);
     });
 
 builder.Services
-    .AddSingleton<IRequestValidator<CreateAccountRequest, ValidatedSavingsAccountRequest>, SavingsRequestValidator>();
+    .AddKeyedSingleton<IRequestValidator<string?, string>>("idempotency-key-validator", (sp, key) =>
+    {
+        //TODO: A bit more thought needs to be put into the format of the idempotency key in the first place - Do we want to possibly ONLY restrict it to alphanumeric characters ??
+        //Or just have it be a GUID ??
+        var logger = sp.GetRequiredService<ILogger<InputLengthAndNonEmptyStringValidator>>();
+        return new InputLengthAndNonEmptyStringValidator(logger, 10, 100, SavingsAccountRequestFields.IdempotencyKey);
+    });
+
+builder.Services
+    .AddSingleton<IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader), ValidatedSavingsAccountRequest>, SavingsRequestValidator>();
 
 
 #endregion
@@ -76,14 +93,14 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+//TODO: We should not do this redirect in the application layer - In Production this would be handled at the Service Mesh (Istio) level
 app.UseHttpsRedirection();
-
 
 var apiGroup = app.MapGroup("api/v1");
 
-apiGroup.MapPost("/account", ([FromBody] CreateAccountRequest createAccountRequest, IRequestValidator<CreateAccountRequest, ValidatedSavingsAccountRequest> validator) =>
+apiGroup.MapPost("/account", ([FromHeader(Name = "idempotency-key")] string? idempotencyKey, [FromBody] CreateAccountRequest createAccountRequest, IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader), ValidatedSavingsAccountRequest> savingsAccountValidator) =>
     {
-        var validationResult = validator.Validate(createAccountRequest);
+        var validationResult = savingsAccountValidator.Validate((createAccountRequest, idempotencyKey));
 
         if (validationResult is OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation
             failedOperation)

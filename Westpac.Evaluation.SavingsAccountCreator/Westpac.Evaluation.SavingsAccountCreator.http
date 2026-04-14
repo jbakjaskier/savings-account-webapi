@@ -3,6 +3,7 @@
 POST {{HostAddress}}/api/v1/account/
 Accept: application/json
 Content-Type: application/json
+idempotency-key: 123456098765
 
 {
   "accountType": "Savings",
@@ -10,6 +11,6 @@ Content-Type: application/json
     "firstName": "Angel",
     "lastName": "Klien"
   },
-  "accountNickName": "Ring"
+  "accountNickName": "booguj"
 }
 ###
