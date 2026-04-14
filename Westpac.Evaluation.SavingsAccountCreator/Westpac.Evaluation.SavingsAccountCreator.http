@@ -1,0 +1,15 @@
+
+### This endpoint can be called to CREATE a savings account
+POST {{HostAddress}}/api/v1/account/
+Accept: application/json
+Content-Type: application/json
+
+{
+  "accountType": "Savings",
+  "customerName": {
+    "firstName": "Angel",
+    "lastName": "Klien"
+  },
+  "accountNickName": "Ring"
+}
+###
