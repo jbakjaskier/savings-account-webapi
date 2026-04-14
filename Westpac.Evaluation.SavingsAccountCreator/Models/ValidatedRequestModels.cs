@@ -16,7 +16,8 @@ public readonly record struct ValidatedSavingsAccountRequest(
     ValidatedCustomerName CustomerName,
     string? AccountNickName,
     string IdempotencyKey,
-    long CustomerNumber)
+    long CustomerNumber,
+    string BranchCode)
 {
     public required long CustomerNumber { get; init; } = CustomerNumber;
     
@@ -25,4 +26,6 @@ public readonly record struct ValidatedSavingsAccountRequest(
     public required AccountType AccountType { get; init; } = AccountType.Savings;
     
     public required ValidatedCustomerName CustomerName { get; init; } = CustomerName;
+    
+    public required string BranchCode { get; init; } = BranchCode;
 }

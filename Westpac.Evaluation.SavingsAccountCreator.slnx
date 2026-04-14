@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="Westpac.Evaluation.DomainModels/Westpac.Evaluation.DomainModels.csproj" />
   <Project Path="Westpac.Evaluation.SavingsAccountCreator/Westpac.Evaluation.SavingsAccountCreator.csproj" />
+  <Project Path="Westpac.Evaluation.Testing.Unit.SavingsAccountCreator/Westpac.Evaluation.Testing.Unit.SavingsAccountCreator.csproj" />
 </Solution>

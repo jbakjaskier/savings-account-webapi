@@ -32,7 +32,9 @@ public interface IRequestValidator<in TUnValidatedRequest, TValidatedRequest>
 
 
 
-public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offensiveWordsOptions, ILogger<SavingsRequestValidator> logger, 
+public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offensiveWordsOptions, 
+    IOptions<SavingsAccountCreationConfiguration> savingsAccountCreationOptions,
+    ILogger<SavingsRequestValidator> logger, 
     [FromKeyedServices("first-name-validator")] IRequestValidator<string?, string> firstNameLengthValidator, 
     [FromKeyedServices("last-name-validator")] IRequestValidator<string?, string> lastNameLengthValidator, 
     [FromKeyedServices("idempotency-key-validator")] IRequestValidator<string?, string> idempotencyKeyValidator,
@@ -86,7 +88,21 @@ public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offe
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
                 new ValidationFailure(SavingsAccountRequestFields.CustomerNumber, "The customer number is invalid")
             );
-            
+        }
+
+        if (string.IsNullOrWhiteSpace(request.requestBody.BranchCode))
+        {
+            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
+                new ValidationFailure(SavingsAccountRequestFields.BranchCode, "The branch code is required")
+            );
+        }
+
+        if (request.requestBody.BranchCode.Length != 4 || !request.requestBody.BranchCode.All(char.IsDigit) || !savingsAccountCreationOptions.Value.ValidBranchCodes.Any(validBranchCode =>
+                validBranchCode.Equals(request.requestBody.BranchCode)))
+        {
+            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
+                new ValidationFailure(SavingsAccountRequestFields.BranchCode, "The branch code is invalid")
+            );
         }
 
         if (request.requestBody.CustomerName is null)
@@ -123,7 +139,8 @@ public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offe
                 },
                 AccountNickName: null,
                 IdempotencyKey: request.idempotencyKeyFromHeader!,
-                CustomerNumber: customerNumberParsed
+                CustomerNumber: customerNumberParsed,
+                BranchCode: request.requestBody.BranchCode!
                 ));
 
         }
@@ -160,7 +177,8 @@ public class SavingsRequestValidator (IOptions<OffensiveWordsConfiguration> offe
             },
             AccountNickName: request.requestBody.AccountNickName!,
             IdempotencyKey: request.idempotencyKeyFromHeader!,
-            CustomerNumber: customerNumberParsed
+            CustomerNumber: customerNumberParsed,
+            BranchCode: request.requestBody.BranchCode!
         ));
         
     }

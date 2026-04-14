@@ -27,7 +27,6 @@ public class Account
     /// <summary>
     /// This is the account number for the account.
     /// This is a seven digit value
-    /// 
     /// </summary>
     public required string AccountNumber { get; init; }
     

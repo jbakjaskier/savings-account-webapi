@@ -3,6 +3,54 @@ namespace Westpac.Evaluation.DomainModels;
 public static class OperationResponseExtensions
 {
     
+    
+    public static async Task<TResult> Match<T, U, TResult>(
+        this OperationResponse<T, U> responseTask,
+        Func<T, Task<TResult>> onSuccess,
+        Func<U, TResult> onError)
+    {
+        return responseTask switch
+        {
+            OperationResponse<T, U>.SuccessfulOperation success => await onSuccess(
+                success.Data),
+            OperationResponse<T, U>.FailedOperation failed => onError(
+                failed.Data),
+            _ => throw new InvalidOperationException("Unknown response type")
+        };
+    }
+    
+    
+    public static async Task<TResult> Match<T, U, TResult>(
+        this OperationResponse<T, U> responseTask,
+        Func<T, TResult> onSuccess,
+        Func<U, Task<TResult>> onError)
+    {
+        return responseTask switch
+        {
+            OperationResponse<T, U>.SuccessfulOperation success => onSuccess(
+                success.Data),
+            OperationResponse<T, U>.FailedOperation failed => await onError(
+                failed.Data),
+            _ => throw new InvalidOperationException("Unknown response type")
+        };
+    }
+    
+    
+    public static async Task<TResult> Match<T, U, TResult>(
+        this OperationResponse<T, U> responseTask,
+        Func<T, Task<TResult>> onSuccess,
+        Func<U, Task<TResult>> onError)
+    {
+        return responseTask switch
+        {
+            OperationResponse<T, U>.SuccessfulOperation success => await onSuccess(
+                success.Data),
+            OperationResponse<T, U>.FailedOperation failed => await onError(
+                failed.Data),
+            _ => throw new InvalidOperationException("Unknown response type")
+        };
+    }
+    
     public static TResult Match<T, U, TResult>(
         this OperationResponse<T, U> responseTask,
         Func<T, TResult> onSuccess,

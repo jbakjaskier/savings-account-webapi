@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Westpac.Evaluation.DomainModels;
 using Westpac.Evaluation.SavingsAccountCreator.Configuration;
 using Westpac.Evaluation.SavingsAccountCreator.Models;
+using Westpac.Evaluation.SavingsAccountCreator.Persistence.Repository;
 using Westpac.Evaluation.SavingsAccountCreator.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +20,8 @@ builder.Services.AddHealthChecks()
 #region Inject Configuration
 
 builder.Services.Configure<OffensiveWordsConfiguration>(builder.Configuration.GetRequiredSection("OffensiveWords"));
+builder.Services.Configure<SavingsAccountCreationConfiguration>(
+    builder.Configuration.GetRequiredSection("SavingsAccountCreation"));
 
 #endregion
 
@@ -29,8 +31,8 @@ builder.Services
     .AddKeyedSingleton<IRequestValidator<string?, string>>("first-name-validator", (sp, key) =>
     {
         var logger = sp.GetRequiredService<ILogger<InputLengthAndNonEmptyStringValidator>>();
-        
-        
+
+
         /**
          *
          * TODO:
@@ -39,18 +41,17 @@ builder.Services
          *
         */
         return new InputLengthAndNonEmptyStringValidator(logger, 3, 100, SavingsAccountRequestFields.FirstName);
-
     });
 
 builder.Services
     .AddKeyedSingleton<IRequestValidator<string?, string>>("last-name-validator", (sp, key) =>
     {
         var logger = sp.GetRequiredService<ILogger<InputLengthAndNonEmptyStringValidator>>();
-        
+
         //TODO: We're also intentionally not looking for offensive words in the customers name as it is the customers name. 
         // IF CDD (Customer Due Diligence) has NOT happened before and This is a PUBLIC facing API - in which case we also have to do check the input for offensive words. 
         // However, this is a question for the business - how can we actually say that something in a person's NAME is offensive (cultural context etc - this is not talking about instances wherein it's obviously offensive)
-        
+
         /**
          *
          * TODO: Another question for the business in this case
@@ -58,7 +59,6 @@ builder.Services
          * If there are other language names - how are we handling them ?
          */
         return new InputLengthAndNonEmptyStringValidator(logger, 3, 100, SavingsAccountRequestFields.LastName);
-
     });
 
 builder.Services
@@ -79,8 +79,9 @@ builder.Services
     });
 
 builder.Services
-    .AddSingleton<IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader), ValidatedSavingsAccountRequest>, SavingsRequestValidator>();
-
+    .AddSingleton<
+        IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader),
+            ValidatedSavingsAccountRequest>, SavingsRequestValidator>();
 
 #endregion
 
@@ -88,27 +89,26 @@ builder.Services
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 //TODO: We should not do this redirect in the application layer - In Production this would be handled at the Service Mesh (Istio) level
 app.UseHttpsRedirection();
 
 var apiGroup = app.MapGroup("api/v1");
 
-apiGroup.MapPost("/account", ([FromHeader(Name = "idempotency-key")] string? idempotencyKey, [FromBody] CreateAccountRequest createAccountRequest, IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader), ValidatedSavingsAccountRequest> savingsAccountValidator) =>
+//TODO: The idempotency key will need to be implemented in a transactional basis cause there may be downstream systems that could try and call this endpoint mutiple times as part of the retries 
+apiGroup.MapPost("/account", ([FromHeader(Name = "idempotency-key")] string? idempotencyKey,
+        [FromBody] CreateAccountRequest createAccountRequest,
+        IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader),
+            ValidatedSavingsAccountRequest> savingsAccountValidator,
+        IAccountRepository accountRepository, CancellationToken cancellationToken) =>
     {
-        var validationResult = savingsAccountValidator.Validate((createAccountRequest, idempotencyKey));
-        if (validationResult is OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation
-            failedOperation)
-        {
-            return Results.BadRequest(failedOperation.Data);
-        }
-
-        return Results.Created();
-
+        return savingsAccountValidator.Validate((createAccountRequest, idempotencyKey)).Match(
+            async validatedRequest => await accountRepository.CreateSavingsAccount(validatedRequest, cancellationToken)
+                .Match(accountCreated => Results.Json(accountCreated, statusCode: 201),
+                    accountCreationFailure => accountCreationFailure.GetResult()
+                )
+            , validationFailure => Results.BadRequest(validationFailure));
     })
     .WithName("GetWeatherForecast");
 
@@ -117,4 +117,3 @@ app.MapHealthChecks("/health/readiness").WithName("Readiness");
 
 
 app.Run();
-
