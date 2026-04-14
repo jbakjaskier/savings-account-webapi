@@ -83,6 +83,8 @@ builder.Services
         IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader),
             ValidatedSavingsAccountRequest>, SavingsRequestValidator>();
 
+builder.Services.AddSingleton<IRequestValidator<string?, long>, CustomerNumberValidator>();
+
 #endregion
 
 
@@ -110,7 +112,19 @@ apiGroup.MapPost("/account", ([FromHeader(Name = "idempotency-key")] string? ide
                 )
             , validationFailure => Results.BadRequest(validationFailure));
     })
-    .WithName("GetWeatherForecast");
+    .WithName("CreateSavingsAccount");
+
+apiGroup.MapGet("/account", ([FromQuery(Name = "customerNumber")] string? customerNumber,
+    IRequestValidator<string?, long> customerNumberValidator,
+    CancellationToken cancellationToken, IAccountRepository accountRepository) =>
+{
+    return customerNumberValidator.Validate(customerNumber)
+        .Match(
+            async validatedCustomerNumber => await accountRepository
+                .GetAccountsForCustomer(validatedCustomerNumber, cancellationToken)
+                .Match(accountsForCustomer => Results.Json(accountsForCustomer, statusCode: 200),
+                    actionFailure => actionFailure.GetResult()), failure => Results.BadRequest(failure));
+}).WithName("GetAccountsForCustomer");
 
 app.MapHealthChecks("/health/liveness").WithName("Liveness");
 app.MapHealthChecks("/health/readiness").WithName("Readiness");

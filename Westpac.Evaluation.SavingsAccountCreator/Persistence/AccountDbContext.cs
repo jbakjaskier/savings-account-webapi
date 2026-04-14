@@ -15,12 +15,10 @@ public class AccountDbContext(DbContextOptions<AccountDbContext> options) : DbCo
         //TODO: We may want to change this to a different schema in the future - Currently, we are using the same schema for all tables
         //Also Snake casing is applied at the db context level - we may want to discuss and update it in the future. 
         modelBuilder.HasDefaultSchema("BankAccounts");
-        
+
         base.OnModelCreating(modelBuilder);
-        
+
         modelBuilder.ApplyConfiguration(new CustomerEntityTypeConfiguration());
         modelBuilder.ApplyConfiguration(new AccountEntityTypeConfiguration());
-
     }
-
 }
