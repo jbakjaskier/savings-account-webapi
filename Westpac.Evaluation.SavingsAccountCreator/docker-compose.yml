@@ -1,0 +1,11 @@
+version: '3.4'
+services:
+  db: 
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: LocalPass
+      POSTGRES_DB: SavingsAccountDatabase
+      POSTGRES_USER: LocalUser
+    ports:
+      - "5432:5432"
