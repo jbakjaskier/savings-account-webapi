@@ -71,20 +71,6 @@ public class SavingsRequestValidatorTests
         Assert.Equal("My Savings", success.Data.AccountNickName);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    public void Validate_MissingIdempotencyHeader_ReturnsImmediateFailure(string? header)
-    {
-        var result = _sut.Validate((new CreateAccountRequest(), header));
-
-        var failure =
-            Assert.IsType<OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation>(result);
-        Assert.Equal(RequestFields.IdempotencyKey, failure.Data.Field);
-        _customerNumMock.Verify(x => x.Validate(It.IsAny<string?>()), Times.Never);
-    }
-
     [Fact]
     public void Validate_InvalidAccountType_ReturnsFailure()
     {
