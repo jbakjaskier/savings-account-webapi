@@ -8,12 +8,21 @@ idempotency-key: 123456098765
 {
   "branchCode": "1243",
   "accountType": "Savings",
-  "customerNumber": "1643",
-  "customerName": {
-    "firstName": "Angel",
-    "lastName": "Klien"
-  },
-  "accountNickName": "booguj"
+  "customerNumber": "1755",
+  "accountNickName": null
 }
 
-###
+### This endpoint can be called to CREATE a customer
+### This is an idempotent endpoint and can be called multiple times without creating multiple customers - the customer name will be updated to the most latest request
+POST {{HostAddress}}/api/v1/customer/
+Accept: application/json
+Content-Type: application/json
+
+{
+  "customerNumber": "1755",
+  "customerName": {
+    "firstName": "Angel",
+    "lastName": "Klzad"
+  }
+}
+

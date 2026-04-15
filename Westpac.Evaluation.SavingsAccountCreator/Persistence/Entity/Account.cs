@@ -9,13 +9,13 @@ public class Account
     ///     This is the unique identifier for the account
     ///     This is internal and NOT exposed to the public
     /// </summary>
-    public required Guid Id { get; init; }
+    public Guid Id { get; init; }
 
     /// <summary>
     ///     This is a static value for Westpac Bank - this maps to 03
     ///     This is a two digit value
     /// </summary>
-    public required string BankCode { get; init; } = "03";
+    public string BankCode { get; init; } = "03";
 
 
     /// <summary>
@@ -28,7 +28,7 @@ public class Account
     ///     This is the account number for the account.
     ///     This is a seven digit value
     /// </summary>
-    public string AccountNumber { get; init; }
+    public required string AccountNumber { get; init; }
 
 
     /// <summary>
@@ -46,6 +46,11 @@ public class Account
     ///     This is a nickname for the account. This is optional and can be null.
     /// </summary>
     public string? AccountNickName { get; init; }
+    
+    /// <summary>
+    /// This is the date and time that the account was created
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
 
 
     /// <summary>
@@ -58,7 +63,7 @@ public class Account
     ///     This is the EF Core Navigation Property to the Customer Entity
     ///     This is a many to one relationship
     /// </summary>
-    public required Customer Customer { get; set; }
+    public Customer Customer { get; set; }
 }
 
 public class AccountEntityTypeConfiguration : IEntityTypeConfiguration<Account>
@@ -66,7 +71,11 @@ public class AccountEntityTypeConfiguration : IEntityTypeConfiguration<Account>
     public void Configure(EntityTypeBuilder<Account> builder)
     {
         builder.HasKey(x => x.Id);
-
+        
+        builder.Property(x => x.Id)
+            .HasDefaultValueSql("uuidv7()")
+            .ValueGeneratedOnAdd();
+        
         builder.Property(x => x.BankCode)
             .HasDefaultValue("03")
             .IsFixedLength()
@@ -90,14 +99,21 @@ public class AccountEntityTypeConfiguration : IEntityTypeConfiguration<Account>
             .IsFixedLength(false)
             .HasMaxLength(30);
         
+        
         // 2. Configure the AccountNumber string property
         builder
             .Property(a => a.AccountNumber)
             .IsRequired()
             .IsFixedLength()
-            .HasMaxLength(7)
-            // Using Postgres to ensure 7 digits (e.g., "0000001")
-            .HasDefaultValueSql($"to_char(nextval('\"{AccountDbContextConstants.SchemaName}\".\"{AccountDbContextConstants.AccountNumberSequenceName}\"'), 'fm0000000')")
-            .ValueGeneratedOnAdd(); // Tells EF Core the DB will generate this on insert
+            .HasMaxLength(7);
+
+        builder.Property(x => x.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("now()")
+            .ValueGeneratedOnAdd();
+        
+        //The complete acccount number should be unique for every account in the database
+        builder.HasIndex(x => new { x.BankCode, x.BranchCode, x.AccountNumber, x.AccountSuffix })
+            .IsUnique();
     }
 }

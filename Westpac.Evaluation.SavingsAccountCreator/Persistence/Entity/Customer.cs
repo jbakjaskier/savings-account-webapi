@@ -16,7 +16,13 @@ public class Customer
     ///     This is the internal identifier for the customer
     ///     This is not exposed to the public
     /// </summary>
-    public required Guid CustomerId { get; set; }
+    public Guid CustomerId { get; set; }
+    
+    /// <summary>
+    /// This is the date and time that the account was created
+    /// </summary>
+    public required DateTimeOffset CreatedAt { get; set; }
+
 
     /// <summary>
     ///     This is the firstname of the customer
@@ -43,8 +49,16 @@ public class CustomerEntityTypeConfiguration : IEntityTypeConfiguration<Customer
     {
         builder.HasKey(x => x.CustomerId);
 
+        //TODO: This is intentionally v7 given as it's internal ID and we want to inserts and any potential downstream indexing to be faster. 
+        builder.Property(x => x.CustomerId)
+            .HasDefaultValueSql("uuidv7()")
+            .ValueGeneratedOnAdd();
+        
         builder.Property(x => x.CustomerNumber)
             .IsRequired();
+        
+        builder.HasIndex(x => x.CustomerNumber)
+            .IsUnique();
 
         //TODO: The first name and last name length restraints as mentioned in the application startup STILL exist here and will need to updated in the DB contract when answered
         builder.Property(x => x.FirstName)
@@ -52,6 +66,11 @@ public class CustomerEntityTypeConfiguration : IEntityTypeConfiguration<Customer
 
         builder.Property(x => x.LastName)
             .IsRequired();
+        
+        builder.Property(x => x.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("now()")
+            .ValueGeneratedOnAdd();
 
         builder.HasMany(x => x.Accounts)
             .WithOne(x => x.Customer)

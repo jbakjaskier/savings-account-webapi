@@ -2,16 +2,24 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Westpac.Evaluation.SavingsAccountCreator.Models;
 
-public readonly record struct ValidatedCustomerName
+[method: SetsRequiredMembers]
+public readonly record struct ValidatedCreateCustomerRequest(long CustomerNumber, ValidatedCustomerName CustomerName)
 {
-    public required string FirstName { get; init; }
+    public required long CustomerNumber { get; init; } = CustomerNumber;
+    
+    public required ValidatedCustomerName CustomerName { get; init; } = CustomerName;
+}
 
-    public required string LastName { get; init; }
+[method: SetsRequiredMembers]
+public readonly record struct ValidatedCustomerName (string FirstName, string LastName)
+{
+    public required string FirstName { get; init; } = FirstName;
+
+    public required string LastName { get; init; } = LastName;
 }
 
 [method: SetsRequiredMembers]
 public readonly record struct ValidatedSavingsAccountRequest(
-    ValidatedCustomerName CustomerName,
     string? AccountNickName,
     string IdempotencyKey,
     long CustomerNumber,
@@ -22,8 +30,6 @@ public readonly record struct ValidatedSavingsAccountRequest(
     public required string IdempotencyKey { get; init; } = IdempotencyKey;
 
     public required AccountType AccountType { get; init; } = AccountType.Savings;
-
-    public required ValidatedCustomerName CustomerName { get; init; } = CustomerName;
 
     public required string BranchCode { get; init; } = BranchCode;
 }

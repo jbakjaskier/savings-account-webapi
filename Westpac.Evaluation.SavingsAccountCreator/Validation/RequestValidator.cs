@@ -29,10 +29,6 @@ public class SavingsRequestValidator(
     IOptions<OffensiveWordsConfiguration> offensiveWordsOptions,
     IOptions<SavingsAccountCreationConfiguration> savingsAccountCreationOptions,
     ILogger<SavingsRequestValidator> logger,
-    [FromKeyedServices("first-name-validator")]
-    IRequestValidator<string?, string> firstNameLengthValidator,
-    [FromKeyedServices("last-name-validator")]
-    IRequestValidator<string?, string> lastNameLengthValidator,
     [FromKeyedServices("idempotency-key-validator")]
     IRequestValidator<string?, string> idempotencyKeyValidator,
     [FromKeyedServices("account-nickname-length-validator")]
@@ -57,9 +53,8 @@ public class SavingsRequestValidator(
             );
 
         logger.LogInformation(
-            "Validating savings account request with {accountType}, {firstName}, {lastName} and {accountNickName}",
-            request.requestBody.AccountType, request.requestBody.CustomerName?.FirstName,
-            request.requestBody.CustomerName?.LastName, request.requestBody.AccountNickName);
+            "Validating savings account request with {accountType}, {customerNumber} and {accountNickName}",
+            request.requestBody.AccountType, request.requestBody.CustomerNumber, request.requestBody.AccountNickName);
 
         if (string.IsNullOrWhiteSpace(request.requestBody.AccountType) ||
             !Enum.TryParse<AccountType>(request.requestBody.AccountType, false, out var parsedAccountType))
@@ -97,37 +92,14 @@ public class SavingsRequestValidator(
                 new ValidationFailure(SavingsAccountRequestFields.BranchCode, "The branch code is invalid")
             );
 
-        if (request.requestBody.CustomerName is null)
-            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.CustomerName, "The customer name is required")
-            );
-
-        if (firstNameLengthValidator.Validate(request.requestBody.CustomerName.FirstName) is
-            OperationResponse<string, ValidationFailure>.FailedOperation
-            failedFirstNameValidationResult)
-            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                failedFirstNameValidationResult.Data
-            );
-
-        if (lastNameLengthValidator.Validate(request.requestBody.CustomerName.LastName) is
-            OperationResponse<string, ValidationFailure>.FailedOperation lastNameFailureValidationResult)
-            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                lastNameFailureValidationResult.Data
-            );
 
         if (string.IsNullOrWhiteSpace(request.requestBody.AccountNickName))
         {
             logger.LogInformation(
-                "The savings account request has been successfully validated with {firstName} and {lastName} and {accountNickName}",
-                request.requestBody.CustomerName.FirstName, request.requestBody.CustomerName.LastName, null);
+                "The savings account request has been successfully validated with {customerNumber} and {accountNickName}",request.requestBody.CustomerNumber, null);
 
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.SuccessfulOperation(
                 new ValidatedSavingsAccountRequest(
-                    new ValidatedCustomerName
-                    {
-                        FirstName = request.requestBody.CustomerName.FirstName!,
-                        LastName = request.requestBody.CustomerName.LastName!
-                    },
                     null,
                     request.idempotencyKeyFromHeader!,
                     successfulCustomerNumberValidationResult.Data,
@@ -159,17 +131,12 @@ public class SavingsRequestValidator(
 
 
         logger.LogInformation(
-            "The savings account request has been successfully validated with {firstName} and {lastName} and {accountNickName}",
-            request.requestBody.CustomerName.FirstName, request.requestBody.CustomerName.LastName,
+            "The savings account request has been successfully validated with {customerNumber} and {accountNickName}",
+            request.requestBody.CustomerNumber,
             request.requestBody.AccountNickName);
 
         return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.SuccessfulOperation(
             new ValidatedSavingsAccountRequest(
-                new ValidatedCustomerName
-                {
-                    FirstName = request.requestBody.CustomerName.FirstName!,
-                    LastName = request.requestBody.CustomerName.LastName!
-                },
                 request.requestBody.AccountNickName!,
                 request.idempotencyKeyFromHeader!,
                 successfulCustomerNumberValidationResult.Data,
@@ -177,6 +144,65 @@ public class SavingsRequestValidator(
             ));
     }
 }
+
+
+public class CreateCustomerValidator([FromKeyedServices("first-name-validator")]
+    IRequestValidator<string?, string> firstNameLengthValidator,
+    [FromKeyedServices("last-name-validator")]
+    IRequestValidator<string?, string> lastNameLengthValidator,
+    IRequestValidator<string?, long> customerNumberValidator,
+    ILogger<CreateCustomerValidator> logger) : IRequestValidator<CreateCustomerRequest, ValidatedCreateCustomerRequest>
+{
+    public OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure> Validate(CreateCustomerRequest request)
+    {
+        
+        logger.LogInformation("Validating {requestModel} with {customerNumber}, {firstName} and {lastName}", nameof(CreateCustomerRequest), request.CustomerNumber, request.CustomerName?.FirstName, request.CustomerName?.LastName);
+        
+        var customerNumberValidationResult = customerNumberValidator.Validate(request.CustomerNumber);
+
+        if (customerNumberValidationResult is OperationResponse<long, ValidationFailure>.FailedOperation
+            customerNumberFailureValidationResult)
+            return new OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure>.FailedOperation(
+                customerNumberFailureValidationResult.Data
+            );
+
+        var successfulCustomerNumberValidationResult =
+            (customerNumberValidationResult as OperationResponse<long, ValidationFailure>.SuccessfulOperation)!;
+
+        
+        if (request.CustomerName is null)
+            return new OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure>.FailedOperation(
+                new ValidationFailure(SavingsAccountRequestFields.CustomerName, "The customer name is required")
+            );
+
+        if (firstNameLengthValidator.Validate(request.CustomerName.FirstName) is
+            OperationResponse<string, ValidationFailure>.FailedOperation
+            failedFirstNameValidationResult)
+            return new OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure>.FailedOperation(
+                failedFirstNameValidationResult.Data
+            );
+
+        if (lastNameLengthValidator.Validate(request.CustomerName.LastName) is
+            OperationResponse<string, ValidationFailure>.FailedOperation lastNameFailureValidationResult)
+            return new OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure>.FailedOperation(
+                lastNameFailureValidationResult.Data
+            );
+
+
+        logger.LogInformation("The customer request has been successfully validated with {customerNumber} and {firstName} and {lastName}", request.CustomerNumber, request.CustomerName.FirstName, request.CustomerName.LastName);
+        
+        return new OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure>.SuccessfulOperation(
+            new ValidatedCreateCustomerRequest(
+                successfulCustomerNumberValidationResult.Data,
+                new ValidatedCustomerName(
+                    request.CustomerName.FirstName!,
+                    request.CustomerName.LastName!
+                    )
+                ) 
+            );
+    }
+}
+
 
 //TODO: This can be separated into two validators - one for input length and one for empty string in the future.
 public class InputLengthAndNonEmptyStringValidator(

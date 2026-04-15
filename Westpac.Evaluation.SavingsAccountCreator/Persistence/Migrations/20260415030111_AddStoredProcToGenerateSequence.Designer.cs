@@ -12,8 +12,8 @@ using Westpac.Evaluation.SavingsAccountCreator.Persistence;
 namespace Westpac.Evaluation.SavingsAccountCreator.Persistence.Migrations
 {
     [DbContext(typeof(AccountDbContext))]
-    [Migration("20260414080537_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260415030111_AddStoredProcToGenerateSequence")]
+    partial class AddStoredProcToGenerateSequence
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,7 +30,8 @@ namespace Westpac.Evaluation.SavingsAccountCreator.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("uuidv7()");
 
                     b.Property<string>("AccountNickName")
                         .HasMaxLength(30)
@@ -63,12 +64,20 @@ namespace Westpac.Evaluation.SavingsAccountCreator.Persistence.Migrations
                         .HasColumnType("character(4)")
                         .IsFixedLength();
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("BankCode", "BranchCode", "AccountNumber", "AccountSuffix")
+                        .IsUnique();
 
                     b.ToTable("Accounts", "BankAccounts");
                 });
@@ -77,7 +86,13 @@ namespace Westpac.Evaluation.SavingsAccountCreator.Persistence.Migrations
                 {
                     b.Property<Guid>("CustomerId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<long>("CustomerNumber")
                         .HasColumnType("bigint");
@@ -91,6 +106,9 @@ namespace Westpac.Evaluation.SavingsAccountCreator.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("CustomerId");
+
+                    b.HasIndex("CustomerNumber")
+                        .IsUnique();
 
                     b.ToTable("Customers", "BankAccounts");
                 });

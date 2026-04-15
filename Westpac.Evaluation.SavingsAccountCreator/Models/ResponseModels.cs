@@ -1,5 +1,10 @@
 namespace Westpac.Evaluation.SavingsAccountCreator.Models;
 
+public record CustomerResponse
+{
+    public required long CustomerNumber { get; init; }
+}
+
 public record AccountResponse
 {
     /// <summary>

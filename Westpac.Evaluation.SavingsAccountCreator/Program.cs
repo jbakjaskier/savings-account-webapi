@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Westpac.Evaluation.DomainModels;
 using Westpac.Evaluation.SavingsAccountCreator.Configuration;
 using Westpac.Evaluation.SavingsAccountCreator.Models;
+using Westpac.Evaluation.SavingsAccountCreator.Persistence;
 using Westpac.Evaluation.SavingsAccountCreator.Persistence.Repository;
 using Westpac.Evaluation.SavingsAccountCreator.Validation;
 
@@ -83,7 +85,17 @@ builder.Services
         IRequestValidator<(CreateAccountRequest requestBody, string? idempotencyKeyFromHeader),
             ValidatedSavingsAccountRequest>, SavingsRequestValidator>();
 
+
+builder.Services
+    .AddSingleton<IRequestValidator<CreateCustomerRequest, ValidatedCreateCustomerRequest>, CreateCustomerValidator>();
+
 builder.Services.AddSingleton<IRequestValidator<string?, long>, CustomerNumberValidator>();
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AccountDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 
 #endregion
 
@@ -113,6 +125,20 @@ apiGroup.MapPost("/account", ([FromHeader(Name = "idempotency-key")] string? ide
             , validationFailure => Results.BadRequest(validationFailure));
     })
     .WithName("CreateSavingsAccount");
+
+
+//TODO: The idempotency key will need to be implemented in a transactional basis cause there may be downstream systems that could try and call this endpoint mutiple times as part of the retries - especially given this is a CREATE endpoint
+apiGroup.MapPost("/customer", (
+    [FromBody] CreateCustomerRequest createCustomerRequest,
+    IRequestValidator<CreateCustomerRequest, ValidatedCreateCustomerRequest> createCustomerRequestValidator,
+    IAccountRepository accountRepository,
+    CancellationToken cancellationToken) =>
+{
+    return createCustomerRequestValidator.Validate(createCustomerRequest).Match(succeededValidation =>
+            accountRepository.CreateCustomer(succeededValidation, cancellationToken).Match(
+                createCustomer => Results.Json(createCustomer, statusCode: 201), failure => failure.GetResult()),
+        failure => Results.BadRequest(failure));
+});
 
 apiGroup.MapGet("/account", ([FromQuery(Name = "customerNumber")] string? customerNumber,
     IRequestValidator<string?, long> customerNumberValidator,

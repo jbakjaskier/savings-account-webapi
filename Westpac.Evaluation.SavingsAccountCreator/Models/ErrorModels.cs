@@ -5,7 +5,7 @@ namespace Westpac.Evaluation.SavingsAccountCreator.Models;
 [JsonConverter(typeof(JsonStringEnumConverter<ErrorCode>))]
 public enum ErrorCode
 {
-    ExceededMaxNumberOfAccounts,
+    ExceededMaxNumberOfAccountsPerCustomer,
     CustomerDoesNotExist,
     CustomerDoesNotHaveAnyAccounts,
     UnknownFailure
@@ -38,8 +38,8 @@ public static class ActionFailureExtensions
         {
             ErrorCode.CustomerDoesNotExist => Results.NotFound(actionFailure),
             ErrorCode.CustomerDoesNotHaveAnyAccounts => Results.NoContent(),
-            ErrorCode.ExceededMaxNumberOfAccounts => Results.Conflict(actionFailure),
-            ErrorCode.UnknownFailure => Results.BadRequest(actionFailure),
+            ErrorCode.ExceededMaxNumberOfAccountsPerCustomer => Results.Conflict(actionFailure),
+            ErrorCode.UnknownFailure => Results.Json(actionFailure, statusCode: 500),
             _ => throw new ArgumentOutOfRangeException(nameof(actionFailure.ErrorCode), actionFailure.ErrorCode,
                 "Unknown error code")
         };

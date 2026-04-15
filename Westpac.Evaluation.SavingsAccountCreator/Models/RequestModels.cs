@@ -6,6 +6,13 @@ public enum AccountType
     Checking
 }
 
+public record CreateCustomerRequest
+{
+    public string? CustomerNumber { get; init; }
+    
+    public CustomerName? CustomerName { get; init; }
+}
+
 public record CreateAccountRequest
 {
     public string? BranchCode { get; init; }
@@ -13,8 +20,6 @@ public record CreateAccountRequest
     public string? AccountType { get; init; }
 
     public string? CustomerNumber { get; init; }
-
-    public CustomerName? CustomerName { get; init; }
 
     public string? AccountNickName { get; init; }
 }
