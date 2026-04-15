@@ -28,8 +28,8 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
                 "AccountService",
                 "Postgres"};
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "", "Bank Account Management", "  As a bank customer\n  I want to create and retrieve savings accounts\n  So that I" +
-                " can manage my finances securely", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "", "Bank Account Management", "As a bank customer\nI want to create and retrieve savings accounts\nSo that I can m" +
+                "anage my finances securely", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
         private global::Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
@@ -110,22 +110,22 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
         
         public virtual async global::System.Threading.Tasks.Task FeatureBackgroundAsync()
         {
-#line 8
-  #line hidden
 #line 9
-    await testRunner.GivenAsync("the bank account API is running", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 10
-    await testRunner.AndAsync("the offensive nicknames list contains \"[\"badword1\", \"badword2\"]\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.GivenAsync("the bank account API is running", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 11
+    await testRunner.AndAsync("the offensive nicknames list contains \"[\"badword1\", \"badword2\"]\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 12
     await testRunner.AndAsync("the Maximum Number of Accounts Per Customer is \"5\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
         }
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("SavingsAccount.feature.ndjson", 12);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("SavingsAccount.feature.ndjson", 9);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -158,8 +158,8 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
         [global::Xunit.TraitAttribute("Description", "Successfully create a new savings account")]
         [global::Xunit.TraitAttribute("Category", "Positive")]
         [global::Xunit.TraitAttribute("Category", "Validation")]
-        [global::Xunit.InlineDataAttribute("17990", "My Savings", "", "0", new string[0])]
-        [global::Xunit.InlineDataAttribute("4091", "", "", "1", new string[0])]
+        [global::Xunit.InlineDataAttribute("17990", "My Savings", "0004", "0", new string[0])]
+        [global::Xunit.InlineDataAttribute("40911", "Fun Savings Account", "1243", "1", new string[0])]
         public async global::System.Threading.Tasks.Task SuccessfullyCreateANewSavingsAccount(string customerNumber, string accountNickname, string branchCode, string @__pickleIndex, string[] exampleTags)
         {
             string[] @__tags = new string[] {
@@ -178,8 +178,8 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Successfully create a new savings account", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 14
-  this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line 16
+this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
             {
@@ -188,26 +188,26 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             else
             {
                 await this.ScenarioStartAsync();
-#line 8
-  await this.FeatureBackgroundAsync();
+#line 9
+await this.FeatureBackgroundAsync();
 #line hidden
-#line 15
+#line 17
     await testRunner.GivenAsync(string.Format("a customer with {0} already exists", customerNumber), ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 16
+#line 18
     await testRunner.WhenAsync(string.Format("I submit a request to create a savings account with {0}, <AccountNickName> and {1" +
                             "}", customerNumber, branchCode), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 17
+#line 19
     await testRunner.ThenAsync("the response status should be \"201\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 18
+#line 20
     await testRunner.AndAsync("the response should contain an autogenerated account number", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 19
+#line 21
     await testRunner.AndAsync("the account details should be saved in the database table", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 20
+#line 22
     await testRunner.AndAsync("the customer should have not exceeded the maximum number of accounts per customer" +
                         "", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
@@ -220,11 +220,8 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
         [global::Xunit.TraitAttribute("Description", "Validate account creation input constraints")]
         [global::Xunit.TraitAttribute("Category", "Negative")]
         [global::Xunit.TraitAttribute("Category", "Validation")]
-        [global::Xunit.InlineDataAttribute("", "ValidNick", "", "Customer name is mandatory", "2", new string[0])]
-        [global::Xunit.InlineDataAttribute("Alice", "Tiny", "", "Nickname must be between 5 and 30 characters", "3", new string[0])]
-        [global::Xunit.InlineDataAttribute("Bob", "ThisNicknameIsWayTooLongForBank", "", "Nickname must be between 5 and 30 characters", "4", new string[0])]
-        [global::Xunit.InlineDataAttribute("Charlie", "badword1", "", "Nickname contains offensive content", "5", new string[0])]
-        public async global::System.Threading.Tasks.Task ValidateAccountCreationInputConstraints(string customerNumber, string accountNickname, string branchCode, string errorMessage, string @__pickleIndex, string[] exampleTags)
+        [global::Xunit.InlineDataAttribute("123144", "ValidNick", "InvalidBranchCode", "BranchCode", "2", new string[0])]
+        public async global::System.Threading.Tasks.Task ValidateAccountCreationInputConstraints(string customerNumber, string accountNickname, string branchCode, string errorField, string @__pickleIndex, string[] exampleTags)
         {
             string[] @__tags = new string[] {
                     "Negative",
@@ -238,13 +235,13 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             argumentsOfScenario.Add("CustomerNumber", customerNumber);
             argumentsOfScenario.Add("AccountNickname", accountNickname);
             argumentsOfScenario.Add("BranchCode", branchCode);
-            argumentsOfScenario.Add("ErrorMessage", errorMessage);
+            argumentsOfScenario.Add("ErrorField", errorField);
             string pickleIndex = @__pickleIndex;
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Validate account creation input constraints", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 28
-  this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line 31
+this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
             {
@@ -253,38 +250,38 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             else
             {
                 await this.ScenarioStartAsync();
-#line 8
-  await this.FeatureBackgroundAsync();
+#line 9
+await this.FeatureBackgroundAsync();
 #line hidden
-#line 29
+#line 32
     await testRunner.WhenAsync(string.Format("I submit a request to create a savings account with {0}, <AccountNickName> and {1" +
                             "}", customerNumber, branchCode), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 30
+#line 33
     await testRunner.ThenAsync("the response status should be \"400\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 31
-    await testRunner.AndAsync(string.Format("the error message should be {0}", errorMessage), ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line 34
+    await testRunner.AndAsync(string.Format("the error field should be {0}", errorField), ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [global::Xunit.SkippableFactAttribute(DisplayName="Prevent creation of more than 5 accounts per customer")]
+        [global::Xunit.SkippableFactAttribute(DisplayName="Prevent creation of more than max accounts per customer")]
         [global::Xunit.TraitAttribute("FeatureTitle", "Bank Account Management")]
-        [global::Xunit.TraitAttribute("Description", "Prevent creation of more than 5 accounts per customer")]
+        [global::Xunit.TraitAttribute("Description", "Prevent creation of more than max accounts per customer")]
         [global::Xunit.TraitAttribute("Category", "BusinessRule")]
-        public async global::System.Threading.Tasks.Task PreventCreationOfMoreThan5AccountsPerCustomer()
+        public async global::System.Threading.Tasks.Task PreventCreationOfMoreThanMaxAccountsPerCustomer()
         {
             string[] tagsOfScenario = new string[] {
                     "BusinessRule"};
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
-            string pickleIndex = "6";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Prevent creation of more than 5 accounts per customer", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string pickleIndex = "3";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Prevent creation of more than max accounts per customer", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 41
-  this.ScenarioInitialize(scenarioInfo, ruleInfo);
+this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
             {
@@ -293,16 +290,19 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             else
             {
                 await this.ScenarioStartAsync();
-#line 8
-  await this.FeatureBackgroundAsync();
+#line 9
+await this.FeatureBackgroundAsync();
 #line hidden
 #line 42
-    await testRunner.GivenAsync("a customer with customer number \"109212\" already has 5 active accounts", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("a customer exists with customer number \"109212\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 43
-    await testRunner.WhenAsync("I submit a request for customer number \"109212\" to create a new account", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.AndAsync("a customer with customer number \"109212\" already has 5 active accounts", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 44
+    await testRunner.WhenAsync("I submit a request for customer number \"109212\" to create a new account", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 45
     await testRunner.ThenAsync("the response status should be \"409\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -318,12 +318,12 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             string[] tagsOfScenario = new string[] {
                     "Positive"};
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
-            string pickleIndex = "7";
+            string pickleIndex = "4";
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Retrieve an existing savings account", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 47
-  this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line 48
+this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
             {
@@ -332,23 +332,23 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             else
             {
                 await this.ScenarioStartAsync();
-#line 8
-  await this.FeatureBackgroundAsync();
-#line hidden
-#line 48
-    await testRunner.GivenAsync("a customer exists with customer number \"17709\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line 9
+await this.FeatureBackgroundAsync();
 #line hidden
 #line 49
-    await testRunner.AndAsync("they have \"2\" savings account", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.GivenAsync("a customer exists with customer number \"1012938\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 50
-    await testRunner.WhenAsync("I request all the accounts that the customer holds", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.AndAsync("a customer with customer number \"1012938\" already has 2 active accounts", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 51
-    await testRunner.ThenAsync("the response status should be \"200\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.WhenAsync("I request all the accounts that the customer holds", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 52
-    await testRunner.AndAsync("the response body should contain two account items", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.ThenAsync("the response status should be \"200\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 53
+    await testRunner.AndAsync("the response body should contain \"2\" account items", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -359,8 +359,8 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
         [global::Xunit.TraitAttribute("Description", "Handle database unavailability")]
         [global::Xunit.TraitAttribute("Category", "ErrorHandling")]
         [global::Xunit.TraitAttribute("Category", "Database")]
-        [global::Xunit.InlineDataAttribute("17990", "My Savings", "", "8", new string[0])]
-        [global::Xunit.InlineDataAttribute("4091", "", "", "9", new string[0])]
+        [global::Xunit.InlineDataAttribute("902938", "My Savings", "0004", "5", new string[0])]
+        [global::Xunit.InlineDataAttribute("11002", "Savings", "1243", "6", new string[0])]
         public async global::System.Threading.Tasks.Task HandleDatabaseUnavailability(string customerNumber, string accountNickname, string branchCode, string @__pickleIndex, string[] exampleTags)
         {
             string[] @__tags = new string[] {
@@ -379,8 +379,8 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Handle database unavailability", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 55
-  this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line 57
+this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
             {
@@ -389,17 +389,17 @@ namespace Westpac.Evaluation.Testings.Integration.SavingsAccountCreator
             else
             {
                 await this.ScenarioStartAsync();
-#line 8
-  await this.FeatureBackgroundAsync();
+#line 9
+await this.FeatureBackgroundAsync();
 #line hidden
-#line 56
+#line 58
     await testRunner.GivenAsync("the Postgres database is offline", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 57
+#line 59
     await testRunner.WhenAsync(string.Format("I submit a request to create a savings account with {0}, <AccountNickName> and {1" +
                             "}", customerNumber, branchCode), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 58
+#line 60
     await testRunner.ThenAsync("the response status should be \"500\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }

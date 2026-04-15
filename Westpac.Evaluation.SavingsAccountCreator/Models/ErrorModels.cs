@@ -61,8 +61,10 @@ public readonly record struct ActionFailure(ErrorCode ErrorCode, string ErrorMes
 [method: SetsRequiredMembers]
 public readonly record struct ValidationFailure(RequestFields Field, string ErrorMessage)
 {
+    [JsonPropertyName("field")]
     public required RequestFields Field { get; init; } = Field;
 
+    [JsonPropertyName("errorMessage")]
     public required string ErrorMessage { get; init; } = ErrorMessage;
 
     public static OpenApiSchema OpenApiSchema => new()

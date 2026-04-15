@@ -29,8 +29,6 @@ public class SavingsRequestValidator(
     IOptions<OffensiveWordsConfiguration> offensiveWordsOptions,
     IOptions<SavingsAccountCreationConfiguration> savingsAccountCreationOptions,
     ILogger<SavingsRequestValidator> logger,
-    [FromKeyedServices("idempotency-key-validator")]
-    IRequestValidator<string?, string> idempotencyKeyValidator,
     [FromKeyedServices("account-nickname-length-validator")]
     IRequestValidator<string?, string> accountNickNameLengthValidator,
     IRequestValidator<string?, long> customerNumberValidator)
@@ -40,18 +38,6 @@ public class SavingsRequestValidator(
     public OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure> Validate(
         (CreateAccountRequest requestBody, string? idempotencyKeyFromHeader) request)
     {
-        if (string.IsNullOrWhiteSpace(request.idempotencyKeyFromHeader))
-            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(RequestFields.IdempotencyKey,
-                    "The idempotency key is required in the header")
-            );
-
-        if (idempotencyKeyValidator.Validate(request.idempotencyKeyFromHeader) is
-            OperationResponse<string, ValidationFailure>.FailedOperation idempotencyKeyFailureValidationResult)
-            return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                idempotencyKeyFailureValidationResult.Data
-            );
-
         logger.LogInformation(
             "Validating savings account request with {accountType}, {customerNumber} and {accountNickName}",
             request.requestBody.AccountType, request.requestBody.CustomerNumber, request.requestBody.AccountNickName);
@@ -102,7 +88,6 @@ public class SavingsRequestValidator(
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.SuccessfulOperation(
                 new ValidatedSavingsAccountRequest(
                     null,
-                    request.idempotencyKeyFromHeader!,
                     successfulCustomerNumberValidationResult.Data,
                     request.requestBody.BranchCode!
                 ));
@@ -139,7 +124,6 @@ public class SavingsRequestValidator(
         return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.SuccessfulOperation(
             new ValidatedSavingsAccountRequest(
                 request.requestBody.AccountNickName!,
-                request.idempotencyKeyFromHeader!,
                 successfulCustomerNumberValidationResult.Data,
                 request.requestBody.BranchCode!
             ));

@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Microsoft.OpenApi;
 
 namespace Westpac.Evaluation.SavingsAccountCreator.Models;
@@ -38,23 +39,27 @@ public record AccountResponse
     ///     This is the bank code for the account.
     ///     For Westpac this is a static value of 03
     /// </summary>
+    [JsonPropertyName("bankCode")]
     public required string BankCode { get; init; }
 
     /// <summary>
     ///     This is the account number for the account.
     ///     This is a seven digit value
     /// </summary>
+    [JsonPropertyName("accountNumber")]
     public required string AccountNumber { get; init; }
 
     /// <summary>
     ///     This is a four digit value assigned based on the branch that the account is opened in within Westpac
     /// </summary>
+    [JsonPropertyName("branchCode")]
     public required string BranchCode { get; init; }
 
     /// <summary>
     ///     This is a three digit value that is appended to the account number based on the number of accounts opened by the
     ///     customer
     /// </summary>
+    [JsonPropertyName("accountSuffix")]
     public required string AccountSuffix { get; init; }
 
     public static OpenApiSchema OpenApiSchema => new()

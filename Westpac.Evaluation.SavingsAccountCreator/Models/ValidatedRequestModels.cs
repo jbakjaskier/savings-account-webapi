@@ -21,13 +21,10 @@ public readonly record struct ValidatedCustomerName(string FirstName, string Las
 [method: SetsRequiredMembers]
 public readonly record struct ValidatedSavingsAccountRequest(
     string? AccountNickName,
-    string IdempotencyKey,
     long CustomerNumber,
     string BranchCode)
 {
     public required long CustomerNumber { get; init; } = CustomerNumber;
-
-    public required string IdempotencyKey { get; init; } = IdempotencyKey;
 
     public required AccountType AccountType { get; init; } = AccountType.Savings;
 

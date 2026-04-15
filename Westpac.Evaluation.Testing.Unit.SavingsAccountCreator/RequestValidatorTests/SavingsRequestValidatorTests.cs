@@ -11,7 +11,6 @@ namespace Westpac.Evaluation.Testing.Unit.SavingsAccountCreator.RequestValidator
 public class SavingsRequestValidatorTests
 {
     private readonly Mock<IRequestValidator<string?, long>> _customerNumMock;
-    private readonly Mock<IRequestValidator<string?, string>> _idempotencyMock;
     private readonly Mock<ILogger<SavingsRequestValidator>> _loggerMock;
     private readonly Mock<IRequestValidator<string?, string>> _nickNameMock;
     private readonly OffensiveWordsConfiguration _offensiveConfig;
@@ -21,7 +20,6 @@ public class SavingsRequestValidatorTests
 
     public SavingsRequestValidatorTests()
     {
-        _idempotencyMock = new Mock<IRequestValidator<string?, string>>();
         _nickNameMock = new Mock<IRequestValidator<string?, string>>();
         _customerNumMock = new Mock<IRequestValidator<string?, long>>();
         _loggerMock = new Mock<ILogger<SavingsRequestValidator>>();
@@ -40,7 +38,6 @@ public class SavingsRequestValidatorTests
             Options.Create(_offensiveConfig),
             Options.Create(_savingsConfig),
             _loggerMock.Object,
-            _idempotencyMock.Object,
             _nickNameMock.Object,
             _customerNumMock.Object
         );
@@ -59,7 +56,6 @@ public class SavingsRequestValidatorTests
         };
         const string headerKey = "unique-key";
 
-        SetupIdempotencySuccess(headerKey);
         SetupCustomerSuccess(999L);
         SetupNickNameSuccess("My Savings");
 
@@ -94,7 +90,7 @@ public class SavingsRequestValidatorTests
     {
         // Arrange
         var request = new CreateAccountRequest { AccountType = "Checking" };
-        SetupIdempotencySuccess("key");
+        
 
         // Act
         var result = _sut.Validate((request, "key"));
@@ -114,7 +110,7 @@ public class SavingsRequestValidatorTests
     {
         // Arrange
         var request = new CreateAccountRequest { AccountType = "Savings", BranchCode = branchCode };
-        SetupIdempotencySuccess("key");
+        
         SetupCustomerSuccess(1L);
 
         // Act
@@ -137,7 +133,7 @@ public class SavingsRequestValidatorTests
             BranchCode = "1234",
             AccountNickName = null
         };
-        SetupIdempotencySuccess("key");
+        
         SetupCustomerSuccess(1L);
 
         // Act
@@ -158,7 +154,7 @@ public class SavingsRequestValidatorTests
             BranchCode = "1234",
             AccountNickName = "Contains BadWord here"
         };
-        SetupIdempotencySuccess("key");
+        
         SetupCustomerSuccess(1L);
         SetupNickNameSuccess("Contains BadWord here");
 
@@ -179,26 +175,6 @@ public class SavingsRequestValidatorTests
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
-    [Fact]
-    public void Validate_WhenIdempotencyValidatorFails_ReturnsFailure()
-    {
-        // Arrange
-        var headerKey = "bad-key";
-        var failure = new ValidationFailure(RequestFields.IdempotencyKey, "Invalid format");
-
-        _idempotencyMock
-            .Setup(x => x.Validate(headerKey))
-            .Returns(new OperationResponse<string, ValidationFailure>.FailedOperation(failure));
-
-        // Act
-        var result = _sut.Validate((new CreateAccountRequest(), headerKey));
-
-        // Assert
-        var resultFailure =
-            Assert.IsType<OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation>(result);
-        Assert.Equal(failure, resultFailure.Data);
-    }
-
     [Theory]
     [InlineData(null)]
     [InlineData("NotAnEnum")]
@@ -206,7 +182,7 @@ public class SavingsRequestValidatorTests
     public void Validate_WhenAccountTypeIsInvalid_ReturnsOpaqueFailure(string? accountType)
     {
         // Arrange
-        SetupIdempotencySuccess("key");
+        
         var request = new CreateAccountRequest { AccountType = accountType };
 
         // Act
@@ -225,7 +201,8 @@ public class SavingsRequestValidatorTests
     public void Validate_WhenCustomerNumberValidatorFails_ReturnsFailure()
     {
         // Arrange
-        SetupIdempotencySuccess("key");
+        
+        
         var request = new CreateAccountRequest { AccountType = "Savings", CustomerNumber = "abc" };
         var failure = new ValidationFailure(RequestFields.CustomerNumber, "Must be numeric");
 
@@ -249,7 +226,7 @@ public class SavingsRequestValidatorTests
     public void Validate_WhenBranchCodeIsMissing_ReturnsFailure(string? branchCode)
     {
         // Arrange
-        SetupIdempotencySuccess("key");
+        
         SetupCustomerSuccess(1L);
         var request = new CreateAccountRequest { AccountType = "Savings", BranchCode = branchCode };
 
@@ -267,7 +244,7 @@ public class SavingsRequestValidatorTests
     public void Validate_WhenAccountNickNameValidatorFails_ReturnsFailure()
     {
         // Arrange
-        SetupIdempotencySuccess("key");
+        
         SetupCustomerSuccess(1L);
         var request = new CreateAccountRequest
         {
@@ -291,13 +268,6 @@ public class SavingsRequestValidatorTests
     }
 
     #region Helpers
-
-    private void SetupIdempotencySuccess(string val)
-    {
-        _idempotencyMock.Setup(x => x.Validate(val))
-            .Returns(new OperationResponse<string, ValidationFailure>.SuccessfulOperation(val));
-    }
-
     private void SetupCustomerSuccess(long val)
     {
         _customerNumMock.Setup(x => x.Validate(It.IsAny<string?>()))
