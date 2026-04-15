@@ -6,12 +6,12 @@ namespace Westpac.Evaluation.SavingsAccountCreator.Models;
 public readonly record struct ValidatedCreateCustomerRequest(long CustomerNumber, ValidatedCustomerName CustomerName)
 {
     public required long CustomerNumber { get; init; } = CustomerNumber;
-    
+
     public required ValidatedCustomerName CustomerName { get; init; } = CustomerName;
 }
 
 [method: SetsRequiredMembers]
-public readonly record struct ValidatedCustomerName (string FirstName, string LastName)
+public readonly record struct ValidatedCustomerName(string FirstName, string LastName)
 {
     public required string FirstName { get; init; } = FirstName;
 

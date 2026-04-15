@@ -42,7 +42,7 @@ public class SavingsRequestValidator(
     {
         if (string.IsNullOrWhiteSpace(request.idempotencyKeyFromHeader))
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.IdempotencyKey,
+                new ValidationFailure(RequestFields.IdempotencyKey,
                     "The idempotency key is required in the header")
             );
 
@@ -59,14 +59,14 @@ public class SavingsRequestValidator(
         if (string.IsNullOrWhiteSpace(request.requestBody.AccountType) ||
             !Enum.TryParse<AccountType>(request.requestBody.AccountType, false, out var parsedAccountType))
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.AccountType,
+                new ValidationFailure(RequestFields.AccountType,
                     "The account type is invalid") //Intentionally opaque errors - as we don't want to leak any information about the business logic - however the contract at `openapi.json/yaml` contains the contract in great detail
             );
 
         //Check if it's a savings account type
         if (parsedAccountType != AccountType.Savings)
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.AccountType, "Only savings account is supported")
+                new ValidationFailure(RequestFields.AccountType, "Only savings account is supported")
             );
 
         var customerNumberValidationResult = customerNumberValidator.Validate(request.requestBody.CustomerNumber);
@@ -82,21 +82,22 @@ public class SavingsRequestValidator(
 
         if (string.IsNullOrWhiteSpace(request.requestBody.BranchCode))
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.BranchCode, "The branch code is required")
+                new ValidationFailure(RequestFields.BranchCode, "The branch code is required")
             );
 
         if (request.requestBody.BranchCode.Length != 4 || !request.requestBody.BranchCode.All(char.IsDigit) ||
             !savingsAccountCreationOptions.Value.ValidBranchCodes.Any(validBranchCode =>
                 validBranchCode.Equals(request.requestBody.BranchCode)))
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.BranchCode, "The branch code is invalid")
+                new ValidationFailure(RequestFields.BranchCode, "The branch code is invalid")
             );
 
 
         if (string.IsNullOrWhiteSpace(request.requestBody.AccountNickName))
         {
             logger.LogInformation(
-                "The savings account request has been successfully validated with {customerNumber} and {accountNickName}",request.requestBody.CustomerNumber, null);
+                "The savings account request has been successfully validated with {customerNumber} and {accountNickName}",
+                request.requestBody.CustomerNumber, null);
 
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.SuccessfulOperation(
                 new ValidatedSavingsAccountRequest(
@@ -124,7 +125,7 @@ public class SavingsRequestValidator(
                 request.requestBody.AccountNickName);
 
             return new OperationResponse<ValidatedSavingsAccountRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.AccountNickName,
+                new ValidationFailure(RequestFields.AccountNickName,
                     "The account nickname cannot contain offensive words")
             );
         }
@@ -145,9 +146,8 @@ public class SavingsRequestValidator(
     }
 }
 
-
-public class CreateCustomerValidator([FromKeyedServices("first-name-validator")]
-    IRequestValidator<string?, string> firstNameLengthValidator,
+public class CreateCustomerValidator(
+    [FromKeyedServices("first-name-validator")] IRequestValidator<string?, string> firstNameLengthValidator,
     [FromKeyedServices("last-name-validator")]
     IRequestValidator<string?, string> lastNameLengthValidator,
     IRequestValidator<string?, long> customerNumberValidator,
@@ -155,9 +155,10 @@ public class CreateCustomerValidator([FromKeyedServices("first-name-validator")]
 {
     public OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure> Validate(CreateCustomerRequest request)
     {
-        
-        logger.LogInformation("Validating {requestModel} with {customerNumber}, {firstName} and {lastName}", nameof(CreateCustomerRequest), request.CustomerNumber, request.CustomerName?.FirstName, request.CustomerName?.LastName);
-        
+        logger.LogInformation("Validating {requestModel} with {customerNumber}, {firstName} and {lastName}",
+            nameof(CreateCustomerRequest), request.CustomerNumber, request.CustomerName?.FirstName,
+            request.CustomerName?.LastName);
+
         var customerNumberValidationResult = customerNumberValidator.Validate(request.CustomerNumber);
 
         if (customerNumberValidationResult is OperationResponse<long, ValidationFailure>.FailedOperation
@@ -169,10 +170,10 @@ public class CreateCustomerValidator([FromKeyedServices("first-name-validator")]
         var successfulCustomerNumberValidationResult =
             (customerNumberValidationResult as OperationResponse<long, ValidationFailure>.SuccessfulOperation)!;
 
-        
+
         if (request.CustomerName is null)
             return new OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.CustomerName, "The customer name is required")
+                new ValidationFailure(RequestFields.CustomerName, "The customer name is required")
             );
 
         if (firstNameLengthValidator.Validate(request.CustomerName.FirstName) is
@@ -189,27 +190,28 @@ public class CreateCustomerValidator([FromKeyedServices("first-name-validator")]
             );
 
 
-        logger.LogInformation("The customer request has been successfully validated with {customerNumber} and {firstName} and {lastName}", request.CustomerNumber, request.CustomerName.FirstName, request.CustomerName.LastName);
-        
+        logger.LogInformation(
+            "The customer request has been successfully validated with {customerNumber} and {firstName} and {lastName}",
+            request.CustomerNumber, request.CustomerName.FirstName, request.CustomerName.LastName);
+
         return new OperationResponse<ValidatedCreateCustomerRequest, ValidationFailure>.SuccessfulOperation(
             new ValidatedCreateCustomerRequest(
                 successfulCustomerNumberValidationResult.Data,
                 new ValidatedCustomerName(
                     request.CustomerName.FirstName!,
                     request.CustomerName.LastName!
-                    )
-                ) 
-            );
+                )
+            )
+        );
     }
 }
-
 
 //TODO: This can be separated into two validators - one for input length and one for empty string in the future.
 public class InputLengthAndNonEmptyStringValidator(
     ILogger<InputLengthAndNonEmptyStringValidator> logger,
     int minLengthOfInput,
     int maxLengthOfInput,
-    SavingsAccountRequestFields field) : IRequestValidator<string?, string>
+    RequestFields field) : IRequestValidator<string?, string>
 {
     public OperationResponse<string, ValidationFailure> Validate(string? input)
     {
@@ -239,6 +241,7 @@ public class InputLengthAndNonEmptyStringValidator(
     }
 }
 
+//TODO: The customer number is a unique identifier for a customer. and we don't have any min length validation for it.
 public class CustomerNumberValidator(ILogger<CustomerNumberValidator> logger) : IRequestValidator<string?, long>
 {
     public OperationResponse<long, ValidationFailure> Validate(string? input)
@@ -247,12 +250,12 @@ public class CustomerNumberValidator(ILogger<CustomerNumberValidator> logger) : 
 
         if (string.IsNullOrWhiteSpace(input))
             return new OperationResponse<long, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.CustomerNumber, "The customer number is required")
+                new ValidationFailure(RequestFields.CustomerNumber, "The customer number is required")
             );
 
         if (!input.All(char.IsDigit) || !long.TryParse(input, out var customerNumberParsed))
             return new OperationResponse<long, ValidationFailure>.FailedOperation(
-                new ValidationFailure(SavingsAccountRequestFields.CustomerNumber, "The customer number is invalid")
+                new ValidationFailure(RequestFields.CustomerNumber, "The customer number is invalid")
             );
 
         logger.LogInformation("Customer number validation was successful for {input}", input);

@@ -17,9 +17,9 @@ public class Customer
     ///     This is not exposed to the public
     /// </summary>
     public Guid CustomerId { get; set; }
-    
+
     /// <summary>
-    /// This is the date and time that the account was created
+    ///     This is the date and time that the account was created
     /// </summary>
     public required DateTimeOffset CreatedAt { get; set; }
 
@@ -53,10 +53,10 @@ public class CustomerEntityTypeConfiguration : IEntityTypeConfiguration<Customer
         builder.Property(x => x.CustomerId)
             .HasDefaultValueSql("uuidv7()")
             .ValueGeneratedOnAdd();
-        
+
         builder.Property(x => x.CustomerNumber)
             .IsRequired();
-        
+
         builder.HasIndex(x => x.CustomerNumber)
             .IsUnique();
 
@@ -66,7 +66,7 @@ public class CustomerEntityTypeConfiguration : IEntityTypeConfiguration<Customer
 
         builder.Property(x => x.LastName)
             .IsRequired();
-        
+
         builder.Property(x => x.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("now()")

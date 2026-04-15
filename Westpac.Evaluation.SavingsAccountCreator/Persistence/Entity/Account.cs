@@ -46,9 +46,9 @@ public class Account
     ///     This is a nickname for the account. This is optional and can be null.
     /// </summary>
     public string? AccountNickName { get; init; }
-    
+
     /// <summary>
-    /// This is the date and time that the account was created
+    ///     This is the date and time that the account was created
     /// </summary>
     public DateTimeOffset CreatedAt { get; set; }
 
@@ -71,11 +71,11 @@ public class AccountEntityTypeConfiguration : IEntityTypeConfiguration<Account>
     public void Configure(EntityTypeBuilder<Account> builder)
     {
         builder.HasKey(x => x.Id);
-        
+
         builder.Property(x => x.Id)
             .HasDefaultValueSql("uuidv7()")
             .ValueGeneratedOnAdd();
-        
+
         builder.Property(x => x.BankCode)
             .HasDefaultValue("03")
             .IsFixedLength()
@@ -98,8 +98,8 @@ public class AccountEntityTypeConfiguration : IEntityTypeConfiguration<Account>
             .IsRequired(false)
             .IsFixedLength(false)
             .HasMaxLength(30);
-        
-        
+
+
         // 2. Configure the AccountNumber string property
         builder
             .Property(a => a.AccountNumber)
@@ -111,7 +111,7 @@ public class AccountEntityTypeConfiguration : IEntityTypeConfiguration<Account>
             .IsRequired()
             .HasDefaultValueSql("now()")
             .ValueGeneratedOnAdd();
-        
+
         //The complete acccount number should be unique for every account in the database
         builder.HasIndex(x => new { x.BankCode, x.BranchCode, x.AccountNumber, x.AccountSuffix })
             .IsUnique();

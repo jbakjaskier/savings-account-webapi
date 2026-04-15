@@ -33,7 +33,6 @@ public class AccountRepository(
         // 1. Create the sequence in a separate, isolated step (No explicit transaction, or a short separate one)
         // This way it commits immediately and doesn't lock system catalogs for the duration of the account creation.
         var sequenceName = $"{AccountDbContextConstants.AccountNumberSequenceName}_{account.BranchCode}";
-        //var qualifiedSequenceName = $@"""{AccountDbContextConstants.AccountSchemaName}"".""{sequenceName}""";
 
         //Schema Name - BankAccounts is Hardcode and not used as a constant and reused because EF Core does not support schema names as parameters. 
         // Using ExecuteSqlAsync (EF Core 7+) as it safely parameterizes interpolated strings
@@ -215,10 +214,6 @@ public class AccountRepository(
         try
         {
             // Using ExecuteSqlAsync (EF Core 7+) as it safely parameterizes interpolated strings
-            //The DO EXECUTE ceremony is due to the schema interpolation that is required.
-            // NOTE: %I = identifier (schema/table/column), %L = literal (safely quoted value)
-            // EF Core parameters ({...}) can't be used inside DO $$ blocks, so all values
-            // must be passed through format()'s %L placeholders instead.
             var rowsAffected = await context.Database.ExecuteSqlAsync(
                 $@"INSERT INTO ""BankAccounts"".""Customers""
                         (""CustomerNumber"", ""FirstName"", ""LastName"")

@@ -6,13 +6,12 @@ namespace Westpac.Evaluation.SavingsAccountCreator.Persistence;
 public static class AccountDbContextConstants
 {
     public const string AccountSchemaName = "BankAccounts";
-    
-    public const string AccountNumberSequenceName = "AccountNumberSequence";
-    
-    public const string AccountNumberSequenceGeneratorStoredProcedureName = "create_account_sequence";
-    
-    public const string GetNextAccountNumberStoredProcedureName = "get_next_account_number";
 
+    public const string AccountNumberSequenceName = "AccountNumberSequence";
+
+    public const string AccountNumberSequenceGeneratorStoredProcedureName = "create_account_sequence";
+
+    public const string GetNextAccountNumberStoredProcedureName = "get_next_account_number";
 }
 
 public class AccountDbContext(DbContextOptions<AccountDbContext> options) : DbContext(options)
