@@ -91,7 +91,7 @@ dotnet restore
 
 ---
 
-## 🏃 Running the Application
+##  Running the Application
 
 ### Running Locally
 
@@ -324,10 +324,10 @@ The `SavingsAccount.feature` file defines the business requirements using human-
 *   **Scenarios:** Individual test cases (e.g., "Successfully create a new savings account").
 *   **Steps (`Given`, `When`, `Then`):** The narrative flow of the test.
 
-#### 📜 The Implementation (`StepDefinitions.cs`)
+#### The Implementation (`StepDefinitions.cs`)
 This file contains the actual C# methods decorated with `[Given]`, `[When]`, and `[Then]` attributes. These methods implement the logic described in the `.feature` file.
 
-#### 🔗 The Glue (`DependencyInjectionHooks.cs`)
+#### The Glue (`DependencyInjectionHooks.cs`)
 The `DependencyInjectionHooks` class is crucial. It uses `[ScenarioDependencies]` to:
 1.  Ensure the `TestContext` is available as a singleton throughout the test run (since the DB container must stay up).
 2.  Register the `SavingsAccountStepDefinitions` class so that the Reqnroll framework can inject it and execute its step methods.
@@ -339,7 +339,7 @@ The `TestContext` class acts as the central **service provider** for all integra
 *   **HttpClient:** It provides an `HttpClient` wrapper that is pre-configured to point to the application logic while using the dynamically injected database connection string.
 *   **State Helpers:** It provides state-management methods like `CreateCustomer()`, `CreateMultipleAccountsForCustomer()`, and `GetAccountsForCustomer()`. These methods encapsulate complex database queries, allowing the `StepDefinitions` to read or write to the test environment cleanly without writing raw SQL.
 
-## 🗺️ Test Execution Flow Diagram
+##  Test Execution Flow Diagram
 
 This diagram illustrates how a single scenario executes, showing the flow of control and data between the components.
 
