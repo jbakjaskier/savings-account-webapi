@@ -134,7 +134,7 @@ One of the features of this API is its proactive input validation layer, managed
 
 The request flow follows this sequence:
 
-```
+```mermaid
 sequenceDiagram
     participant Client
     participant API as Westpac API
@@ -250,7 +250,7 @@ Our testing framework is built on the following pillars:
 4.  **Behavior Framework (`Reqnroll`):** The library responsible for parsing the `.feature` file, managing scenario execution flow, and handling dependency injection between steps.
 5.  **Containerization (`Testcontainers`):** Provides true isolation by spinning up and tearing down external services (like Postgres) for each test run programmatically from the application's test suite.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -288,7 +288,7 @@ The most critical aspect of this project is how the database is handled. We use 
 
 **Lifecycle Flow:**
 
-```
+```mermaid
 sequenceDiagram
     participant Dev as Developer
     participant Runner as xUnit Runner
@@ -343,7 +343,7 @@ The `TestContext` class acts as the central **service provider** for all integra
 
 This diagram illustrates how a single scenario executes, showing the flow of control and data between the components.
 
-```
+```mermaid
 graph TD
     A["Test Runner (xUnit)"] -->|1. Starts| B["TestContext (Initialize)"]
     B --> C["Testcontainers (Postgres)"]
@@ -396,9 +396,7 @@ A key challenge in complex business logic is when different execution paths (suc
 
 The `Match<T, U, TResult>` extension method addresses this by providing overloaded versions that map the results of potentially different input types (`T` and `U`) into a single, coherent output type (`TResult`). This pattern allows the execution logic to effectively "co-locate" the successful and failure processing while ensuring the final result is of the required type.
 
-**Mermaid Diagram: Match Pattern Flow**
-
-```
+```mermaid
 graph TD
     A[Start Operation: Task<OperationResponse<T, U>>] -->|SuccessfulOperation| B{Execute Success Path};
     A -->|FailedOperation| C{Execute Failure Path};
@@ -421,9 +419,8 @@ The `RunSideEffect` extension method addresses this concern:
 
 This pattern effectively isolates side effects, adhering to the principle that the side effect execution should not change the outcome of the main operation.
 
-**Mermaid Diagram: Side Effect Isolation**
 
-```
+```mermaid
 graph TD
     A[Start: Task<OperationResponse<T, TU>>] --> B{Await Primary Result};
     B -->|SuccessfulOperation (SuccessData)| C[Execute Side Effect (T -> Task)];
@@ -439,7 +436,7 @@ The `FallbackTo` extension method provides a clean and straightforward mechanism
 
 **Mermaid Diagram: Fallback Flow**
 
-```
+```mermaid
 graph LR
     A[Start: Primary Task] -->|Success| B(Continue Workflow);
     A -->|Failure| C[Execute Fallback Task];
