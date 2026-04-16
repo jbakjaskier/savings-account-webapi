@@ -379,7 +379,7 @@ This project introduces a robust pattern for handling asynchronous operations an
 
 By implementing the `OperationResponse` record pattern, we move away from traditional exception-based error handling, providing a structured container that explicitly carries either a successful result (`TSuccess`) or a specific failure reason (`TFailure`).
 
-### 💡 Core Concepts
+### Core Concepts
 
 ### 1. The `OperationResponse` Pattern (Result Monad)
 
@@ -447,15 +447,4 @@ graph LR
     B --> E(Final Result);
     D --> E;
 ```
-
-
-### Summary of Best Practices
-
-| Feature | Type Handling | Problem Solved |
-| :--- | :--- | :--- |
-| **`OperationResponse`** | Structured result type | Replaces exceptions for predictable flow. |
-| **`Match`** | Handles multiple input types $\rightarrow$ single output type | Enables clean transformation and type coalescence. |
-| **`RunSideEffect`** | Output type preserved | Guarantees that side effects do not affect the final result. |
-| **`FallbackTo`** | Conditional flow path | Provides clean, structured error recovery logic. |
-
 ---
