@@ -203,7 +203,7 @@ dotnet restore
 dotnet test
 ```
 
-## 💡 Core Testing Concepts
+##  Core Testing Concepts
 
 ### 1. Testing Framework: xUnit
 The project utilizes **xUnit** (`xunit` package) as its primary testing framework.
@@ -398,12 +398,13 @@ The `Match<T, U, TResult>` extension method addresses this by providing overload
 
 ```mermaid
 graph TD
-    A[Start Operation: Task<OperationResponse<T, U>>] -->|SuccessfulOperation| B{Execute Success Path};
-    A -->|FailedOperation| C{Execute Failure Path};
-    B -->|Success Func (T -> TResult)| D[Result: TResult];
-    C -->|Error Func (U -> TResult)| E[Result: TResult];
-    D --> F(Final TResult);
-    E --> F;
+    A["Start: Task&lt;OperationResponse&lt;T, U&gt;&gt;"] --> B{Result Type?}
+    
+    B -- Success --> C["Success Func (T -> TResult)"]
+    B -- Failure --> D["Error Func (U -> TResult)"]
+    
+    C --> E([Final TResult])
+    D --> E
 ```
 
 
