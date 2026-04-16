@@ -422,11 +422,13 @@ This pattern effectively isolates side effects, adhering to the principle that t
 
 ```mermaid
 graph TD
-    A[Start: Task<OperationResponse<T, TU>>] --> B{Await Primary Result};
-    B -->|SuccessfulOperation (SuccessData)| C[Execute Side Effect (T -> Task)];
-    C --> D{Side Effect Completes (Ignoring Result)};
-    D --> E[Return Original OperationResponse<T, TU>];
-    B -->|FailedOperation| E;
+    A([Start: Task &lt;OperationResponse&lt;T, TU&gt;&gt;]) --> B{Await Result}
+    
+    B -- Success --> C[Execute Side Effect<br/>T -> Task]
+    B -- Failure --> E([Return Original Response])
+
+    C --> D{Await Side Effect}
+    D -- Completes --> E
 ```
 
 
